@@ -91,6 +91,7 @@ class Skill(Base):
     __tablename__ = 'skills'
     id = Column(Integer, primary_key=True, autoincrement=True)
     name = Column(String(), nullable=False, unique=True)
+    level = Column(Integer)
     users = relationship(
         'User',
         secondary=association_table
@@ -100,7 +101,8 @@ class Skill(Base):
     def create(skill):
         try:
             name = skill['name']
-            skill = db_session.query(Skill).filter(Skill.name == name).first() or Skill(name=name)
+            level = skill['level']
+            skill = db_session.query(Skill).filter(Skill.name == name).first() or Skill(name=name, level=level)
         except KeyError:
             pass
         db_session.add(skill)
@@ -110,5 +112,6 @@ class Skill(Base):
     def serialize(self):
         return {
             'id': self.id,
-            'name': self.name
+            'name': self.name,
+            'level': self.level
         }

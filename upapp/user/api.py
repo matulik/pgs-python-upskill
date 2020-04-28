@@ -35,3 +35,7 @@ def user_by_id(user_id):
             return '', 200
         except UserDoesNotExists:
             return 'User doesnt exist', 404
+    else:
+        # TODO: - raise exception
+        pass
+
