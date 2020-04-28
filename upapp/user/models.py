@@ -29,21 +29,29 @@ class User(Base):
         return jsonify(items)
 
     @staticmethod
+    def user(user_id):
+        user = db_session.query(User).filter(User.id == user_id).first().serialize()
+        # TODO: - Raise if multiple
+        return jsonify(user)
+
+    @staticmethod
     def create(json):
         try:
             first_name = json['first_name']
             last_name = json['last_name']
             skills = [Skill.create(item) for item in json['skills']]
+            user = User(first_name=first_name, last_name=last_name)
+            for skill in skills:
+                user.skills.append(skill)
+            db_session.add(user)
+            db_session.commit()
+            user.cv_url = '/api/user/{user_id}'.format(user_id=user.id)
+            # TODO - commit to times
+            db_session.commit()
+            return jsonify(user.serialize())
         except KeyError:
             # TODO: - Replace to own exception
             KeyError
-
-        user = User(first_name=first_name, last_name=last_name)
-        for skill in skills:
-            user.skills.append(skill)
-        db_session.add(user)
-        db_session.commit()
-        return jsonify(user.serialize())
 
     def __init__(self, first_name=None, last_name=None, cv_url=None):
         self.first_name = first_name

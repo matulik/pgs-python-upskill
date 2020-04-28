@@ -22,4 +22,10 @@ def user():
 
 @bp.route('/user/<int:user_id>', methods=('GET', 'DELETE'))
 def user_by_id(user_id):
-    return 'User id {user_id}'.format(user_id=user_id)
+    if request.method == 'GET':
+        return User.user(user_id=user_id)
+
+    elif request.method == 'DELETE':
+        pass
+
+
