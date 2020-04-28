@@ -12,6 +12,10 @@ association_table = Table(
 )
 
 
+class UserDoesNotExists(BaseException):
+    pass
+
+
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -30,9 +34,20 @@ class User(Base):
 
     @staticmethod
     def user(user_id):
-        user = db_session.query(User).filter(User.id == user_id).first().serialize()
-        # TODO: - Raise if multiple
-        return jsonify(user)
+        user = db_session.query(User).get(user_id)
+        if user is not None:
+            return jsonify(user.serialize())
+        else:
+            raise UserDoesNotExists()
+
+    @staticmethod
+    def delete(user_id):
+        user = db_session.query(User).get(user_id)
+        if user is not None:
+            db_session.delete(user)
+            db_session.commit()
+        else:
+            raise UserDoesNotExists()
 
     @staticmethod
     def create(json):
@@ -41,8 +56,9 @@ class User(Base):
             last_name = json['last_name']
             skills = [Skill.create(item) for item in json['skills']]
             user = User(first_name=first_name, last_name=last_name)
-            for skill in skills:
-                user.skills.append(skill)
+            [user.skills.append(skill) for skill in skills]
+            # for skill in skills:
+            #     user.skills.append(skill)
             db_session.add(user)
             db_session.commit()
             user.cv_url = '/api/user/{user_id}'.format(user_id=user.id)
