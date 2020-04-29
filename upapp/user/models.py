@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Table, ForeignKey
 from sqlalchemy.orm import relationship
 from flask import jsonify
 
+from upapp.aws.aws import AWS
 from upapp.db import Base, db_session
 
 association_table = Table(
@@ -13,6 +14,14 @@ association_table = Table(
 
 
 class UserDoesNotExists(BaseException):
+    pass
+
+
+class UserCreationFailed(BaseException):
+    pass
+
+
+class FileUploadFiled(BaseException):
     pass
 
 
@@ -51,23 +60,34 @@ class User(Base):
 
     @staticmethod
     def create(json):
+        user = None
+
         try:
             first_name = json['first_name']
             last_name = json['last_name']
             skills = [Skill.create(item) for item in json['skills']]
             user = User(first_name=first_name, last_name=last_name)
             [user.skills.append(skill) for skill in skills]
-            # for skill in skills:
-            #     user.skills.append(skill)
-            db_session.add(user)
             db_session.commit()
-            user.cv_url = '/api/user/{user_id}'.format(user_id=user.id)
-            # TODO - commit to times
-            db_session.commit()
-            return jsonify(user.serialize())
         except KeyError:
-            # TODO: - Replace to own exception
-            KeyError
+            raise UserCreationFailed()
+
+    @staticmethod
+    def upload(user_id, file):
+        if file is not None:
+            user = db_session.query(User).get(user_id)
+            aws = AWS()
+            object_name = 'upskill/{user_id}/cv.pdf'.format(user_id=user_id)
+            aws.upload(
+                key=object_name,
+                data=file
+            )
+
+            user.cv_url = aws.create_presigned_url(object_name) or ''
+            return user.serialize()
+
+        else:
+            raise FileUploadFiled()
 
     def __init__(self, first_name=None, last_name=None, cv_url=None):
         self.first_name = first_name
