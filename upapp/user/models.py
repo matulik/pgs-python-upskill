@@ -68,7 +68,9 @@ class User(Base):
             skills = [Skill.create(item) for item in json['skills']]
             user = User(first_name=first_name, last_name=last_name)
             [user.skills.append(skill) for skill in skills]
+            db_session.add(user)
             db_session.commit()
+            return jsonify(user.serialize())
         except KeyError:
             raise UserCreationFailed()
 
