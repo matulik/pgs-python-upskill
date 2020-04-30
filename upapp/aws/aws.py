@@ -1,4 +1,5 @@
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 import sys
 
@@ -11,7 +12,7 @@ class AWS:
         self._bucket.put_object(Key=key, Body=data)
 
     def create_presigned_url(self, object_name, expiration=7200):
-        client = boto3.client('s3')
+        client = boto3.client('s3', config=Config(signature_version='s3v4'))
         try:
             response = client.generate_presigned_url(
                 'get_object',
